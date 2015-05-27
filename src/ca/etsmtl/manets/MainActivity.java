@@ -69,7 +69,11 @@ public class MainActivity extends ActionBarActivity {
     
     public void play(View view) {
     	
-        MediaPlayer mediaPlayer = new MediaPlayer();
+    	Task playTask = new Task();
+    	
+    	playTask.doInBackground();
+    	
+        /*MediaPlayer mediaPlayer = new MediaPlayer();
         
         try {
 			mediaPlayer.setDataSource("/mnt/shared/MusiqueTest/LimpBizkit-THIEVES_10_11.mp3");
@@ -91,6 +95,8 @@ public class MainActivity extends ActionBarActivity {
 		}
         
     	mediaPlayer.start();
+    	
+    	*/
     }
 
 }

@@ -7,7 +7,7 @@ import java.io.IOException;
 public class Server extends NanoHTTPD {
 	
 	public Server(String hostname, int port) {
-		super("10.0.3.15", 8080);
+		super(hostname, port);
 		// TODO Auto-generated constructor stub
 	}
 	
