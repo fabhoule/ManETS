@@ -1,26 +1,28 @@
 package ca.etsmtl.manets;
 
-import java.io.File;
+import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v7.app.ActionBarActivity;
+import android.view.*;
+
 import java.io.IOException;
 
-import android.support.v7.app.ActionBarActivity;
-import android.support.v7.app.ActionBar;
-import android.support.v4.app.Fragment;
-import android.media.MediaPlayer;
-import android.os.Bundle;
-import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
-import android.os.Build;
-
 public class MainActivity extends ActionBarActivity {
+
+    private Server server;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        server = new Server();
+
+        try {
+            server.start();
+        } catch(IOException ioe) {
+            ioe.printStackTrace();
+        }
 
         if (savedInstanceState == null) {
             getSupportFragmentManager().beginTransaction()
@@ -70,15 +72,14 @@ public class MainActivity extends ActionBarActivity {
     public void play(View view) {
     	
     	Task playTask = new Task();
-    	
-    	playTask.doInBackground();
+    	playTask.execute();
     	
         /*MediaPlayer mediaPlayer = new MediaPlayer();
         
         try {
 			mediaPlayer.setDataSource("/mnt/shared/MusiqueTest/LimpBizkit-THIEVES_10_11.mp3");
 			
-			mediaPlayer.prepare(); // Opération qui prend beaucoup de temps.
+			mediaPlayer.prepare(); // Opï¿½ration qui prend beaucoup de temps.
 			
 		} catch (IllegalArgumentException e) {
 			// TODO Auto-generated catch block

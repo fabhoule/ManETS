@@ -1,13 +1,18 @@
 package ca.etsmtl.manets;
 
 import android.media.MediaPlayer;
+import android.os.Environment;
 
 import java.io.IOException;
 
 public class Server extends NanoHTTPD {
-	
+
+	public Server () {
+		super(8080);
+	}
+
 	public Server(String hostname, int port) {
-		super(hostname, port);
+		super("192.168.0.1", 8080);
 		// TODO Auto-generated constructor stub
 	}
 	
@@ -26,6 +31,8 @@ public class Server extends NanoHTTPD {
 
 		final String msg = "HELLO WORLD!!";
 
+
+
 		return newFixedLengthResponse(msg);
 	}
 
@@ -34,13 +41,18 @@ public class Server extends NanoHTTPD {
 		MediaPlayer mediaPlayer = new MediaPlayer();
 
 		try {
-			mediaPlayer.setDataSource("/mnt/shared/MusiqueTest/LimpBizkit-THIEVES_10_11.mp3");
+			mediaPlayer.setDataSource(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/LimpBizkit-THIEVES_10_11.mp3");
 
 			mediaPlayer.prepare(); // Op�ration qui prend beaucoup de temps.
 
 		} catch (IllegalArgumentException | SecurityException | IOException | IllegalStateException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+
+
+
+//			File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/LimpBizkit-THIEVES_10_11.mp3");
+//			file.exists()
 		}
 
 		mediaPlayer.start();
