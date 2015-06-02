@@ -72,32 +72,12 @@ public class MainActivity extends ActionBarActivity {
     public void play(View view) {
     	
     	Task playTask = new Task();
-    	playTask.execute();
-    	
-        /*MediaPlayer mediaPlayer = new MediaPlayer();
-        
-        try {
-			mediaPlayer.setDataSource("/mnt/shared/MusiqueTest/LimpBizkit-THIEVES_10_11.mp3");
-			
-			mediaPlayer.prepare(); // Op�ration qui prend beaucoup de temps.
-			
-		} catch (IllegalArgumentException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (SecurityException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IllegalStateException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-        
-    	mediaPlayer.start();
-    	
-    	*/
+    	playTask.execute("play", "0");
+    }
+
+    public void getPlaylist() {
+        Task getTask = new Task();
+        getTask.execute("getPlaylist", "0");
     }
 
 }
