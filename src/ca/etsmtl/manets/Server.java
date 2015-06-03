@@ -1,6 +1,7 @@
 package ca.etsmtl.manets;
 
 import android.media.MediaMetadataRetriever;
+import android.media.MediaPlayer;
 import android.os.Environment;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -13,6 +14,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 public class Server extends NanoHTTPD {
 
@@ -45,6 +47,18 @@ public class Server extends NanoHTTPD {
 		playlist.setSongs(songList);
 		playlists.add(playlist);
 		manETSPlayer.setPlaylists(playlists);
+
+		manETSPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+			@Override
+			public void onCompletion(MediaPlayer mediaPlayer) {
+				if(manETSPlayer.isRepeatOne()) {
+					play(manETSPlayer.getCurrentSongIdx());
+				} else {
+					next(manETSPlayer.isLooping());
+				}
+
+			}
+		});
 	}
 
 	@Override
@@ -56,15 +70,16 @@ public class Server extends NanoHTTPD {
 
 		String body = "";
 
+		//Mapping des calls http
+		//call to songs
 		if(uri.contains("/songs")) {
+			//PUT call to songs
 			if (method.equals(Method.PUT)) {
 				if (uri.contains("/play")) {
 					if (queryParams.get("index") != null && !queryParams.get("index").equals("")) {
 						final int index = Integer.parseInt(queryParams.get("index"));
 						final Song song = play(index);
-
 						body = gson.toJson(song);
-
 					} else {
 						body = "Missing params";
 					}
@@ -76,14 +91,46 @@ public class Server extends NanoHTTPD {
 						manETSPlayer.start();
 						body = "OK";
 					}
+				} else if (uri.contains("/stop")) {
+					stopSong();
+					body = "OK";
+				} else if (uri.contains("/next")) {
+					body = gson.toJson(next(true));
+				} else if (uri.contains("/previous")) {
+					body = gson.toJson(previous());
 				}
-			}
-		} else if (uri.contains("/playlist")){
-			if(method.equals(Method.GET)) {
-				if(queryParams.get("index") != null && !queryParams.get("index").equals("")) {
-					body = gson.toJson(manETSPlayer.getCurrentPlaylist());
+
+			//GET call to songs
+			} else if(method.equals(Method.GET)) {
+				if (queryParams.get("index") != null && !queryParams.get("index").equals("")) {
+					final int index = Integer.parseInt(queryParams.get("index"));
+					final Song song = manETSPlayer.getPlaylists().get(manETSPlayer.getCurrentPlaylistIdx()).getSongs().get(index);
+					body = gson.toJson(song);
 				} else {
 					body = "Missing params";
+				}
+			}
+
+		//call to playlists
+		} else if (uri.contains("/playlists")) {
+			//GET call to playlists
+			if(method.equals(Method.GET)) {
+				if(queryParams.get("index") != null && !queryParams.get("index").equals("")) {
+					final int index = Integer.parseInt(queryParams.get("index"));
+					body = gson.toJson(manETSPlayer.getPlaylists().get(index));
+				} else {
+					body = "Missing params";
+				}
+
+			//PUT call to playlists
+			} else if(method.equals(Method.PUT)) {
+
+				if(uri.contains("/looping")) {
+					manETSPlayer.setLooping(!manETSPlayer.isLooping());
+				} else if(uri.contains("/repeat")) {
+					manETSPlayer.setRepeatOne(!manETSPlayer.isRepeatOne());
+				} else if(uri.contains("/random")) {
+					manETSPlayer.setRandom(!manETSPlayer.isRandom());
 				}
 			}
 		}
@@ -91,7 +138,50 @@ public class Server extends NanoHTTPD {
 		return newFixedLengthResponse(body);
 	}
 
-	private Song play(final int index){
+	private Song previous() {
+
+		final Playlist currentPlaylist = manETSPlayer.getPlaylists().get(manETSPlayer.getCurrentPlaylistIdx());
+		int previousIdx;
+
+		if(manETSPlayer.getCurrentSongIdx() <= 0) {
+			previousIdx = currentPlaylist.getSongs().size() - 1;
+		} else {
+			previousIdx = manETSPlayer.getCurrentSongIdx() - 1;
+		}
+
+		stopSong();
+		return play(previousIdx);
+	}
+
+	private Song next(final boolean loop) {
+		final Playlist currentPlaylist = manETSPlayer.getPlaylists().get(manETSPlayer.getCurrentPlaylistIdx());
+		int nextIndex;
+
+		if(manETSPlayer.isRandom()) {
+			final Random rn = new Random();
+			nextIndex = rn.nextInt(currentPlaylist.getSongs().size() - 1 + 1);
+		}else {
+			if (manETSPlayer.getCurrentSongIdx() >= currentPlaylist.getSongs().size() - 1) {
+				if (loop) {
+					nextIndex = 0;
+				} else {
+					stopSong();
+					return null;
+				}
+			} else {
+				nextIndex = manETSPlayer.getCurrentSongIdx() + 1;
+			}
+		}
+
+		stopSong();
+		return play(nextIndex);
+	}
+
+	private Song play(final int index) {
+
+		if (manETSPlayer.isPlaying()){
+			stopSong();
+		}
 
 		final Song song = buildFromPath(manETSPlayer.getPlaylists().get(0).getSongs().get(index).getLocation());
 
@@ -105,6 +195,8 @@ public class Server extends NanoHTTPD {
 		}
 
 		manETSPlayer.start();
+		manETSPlayer.setCurrentPlaylistIdx(0);
+		manETSPlayer.setCurrentSongIdx(index);
 
 		return song;
 	}
@@ -112,6 +204,12 @@ public class Server extends NanoHTTPD {
 	private void pause(){
 
 		manETSPlayer.pause();
+	}
+
+	private void stopSong() {
+
+		manETSPlayer.stop();
+		manETSPlayer.reset();
 	}
 
 	private Song buildFromPath(final String path) {

@@ -7,8 +7,10 @@ import java.util.List;
 public class ManETS_Player extends MediaPlayer{
 
     private List<Playlist> playlists;
-    private Playlist currentPlaylist;
-    private Song currentSong;
+    private Integer currentPlaylistIdx;
+    private Integer currentSongIdx;
+    private boolean repeatOne = false;
+    private boolean random = false;
 
     public List<Playlist> getPlaylists() {
         return playlists;
@@ -18,19 +20,35 @@ public class ManETS_Player extends MediaPlayer{
         this.playlists = playlists;
     }
 
-    public Playlist getCurrentPlaylist() {
-        return currentPlaylist;
+    public Integer getCurrentPlaylistIdx() {
+        return currentPlaylistIdx;
     }
 
-    public void setCurrentPlaylist(Playlist currentPlaylist) {
-        this.currentPlaylist = currentPlaylist;
+    public void setCurrentPlaylistIdx(Integer currentPlaylist) {
+        this.currentPlaylistIdx = currentPlaylist;
     }
 
-    public Song getCurrentSong() {
-        return currentSong;
+    public Integer getCurrentSongIdx() {
+        return currentSongIdx;
     }
 
-    public void setCurrentSong(Song currentSong) {
-        this.currentSong = currentSong;
+    public void setCurrentSongIdx(Integer currentSongIdx) {
+        this.currentSongIdx = currentSongIdx;
+    }
+
+    public boolean isRepeatOne() {
+        return repeatOne;
+    }
+
+    public void setRepeatOne(boolean repeatOne) {
+        this.repeatOne = repeatOne;
+    }
+
+    public boolean isRandom() {
+        return random;
+    }
+
+    public void setRandom(boolean random) {
+        this.random = random;
     }
 }
