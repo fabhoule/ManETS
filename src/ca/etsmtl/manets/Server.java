@@ -10,7 +10,6 @@ import models.Song;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -142,13 +141,15 @@ public class Server extends NanoHTTPD {
 			FileInputStream fis = null;
 
 			final String mimeType = (uri.contains(".m3u8") ? "audio/mpeg-url" : "video/MP2T");
+			long fileSize = 0;
 
 			try {
 				fis = new FileInputStream(MEDIA_FOLDER + uri);
-			} catch (FileNotFoundException e) {
+				fileSize = fis.getChannel().size();
+			} catch (IOException e) {
 				e.printStackTrace();
 			}
-			return new NanoHTTPD.Response(Response.Status.OK, mimeType, fis, 260);
+			return new NanoHTTPD.Response(Response.Status.OK, mimeType, fis, fileSize);
 
 		}
 
