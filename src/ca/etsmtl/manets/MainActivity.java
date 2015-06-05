@@ -1,21 +1,34 @@
 package ca.etsmtl.manets;
 
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.media.AudioManager;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.ActionBarActivity;
 import android.view.*;
+import models.ManETS_Player;
 
 import java.io.IOException;
 
 public class MainActivity extends ActionBarActivity {
 
     private Server server;
+    private String port;
+    private String ip;
+    private boolean isStreamMode;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+
+        port = sharedPref.getString("port", "");
+        ip = sharedPref.getString("ip", "");
+        ip = sharedPref.getString("isStreamMode", "");
         server = new Server();
 
         try {
@@ -53,6 +66,10 @@ public class MainActivity extends ActionBarActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    public void setting(MenuItem item) {
+        startActivity(new Intent(this, ManETSPreferenceFragment.class));
+    }
+
     /**
      * A placeholder fragment containing a simple view.
      */
@@ -70,14 +87,37 @@ public class MainActivity extends ActionBarActivity {
     }
     
     public void play(View view) {
-    	
-    	Task playTask = new Task();
-    	playTask.execute("play", "0");
+
+        if(isStreamMode) {
+
+            Task playTask = new Task();
+            playTask.execute("play", "0");
+        } else {
+
+            playStream();
+        }
     }
 
     public void getPlaylist() {
         Task getTask = new Task();
         getTask.execute("getPlaylist", "0");
+    }
+
+    public void playStream() {
+
+        final ManETS_Player manETSPlayer = new ManETS_Player();
+        try {
+            manETSPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+            final String url = String.format("http://%s:%s/01_manifest.m3u8", ip, port);
+            manETSPlayer.setDataSource(url);
+
+            manETSPlayer.prepare(); // Opération qui prend beaucoup de temps.
+
+        } catch (IllegalArgumentException | SecurityException | IOException | IllegalStateException e) {
+            e.printStackTrace();
+        }
+
+        manETSPlayer.start();
     }
 
 }

@@ -1,6 +1,5 @@
 package ca.etsmtl.manets;
 
-import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
 import android.os.Environment;
 import com.google.gson.Gson;
@@ -10,6 +9,8 @@ import models.Playlist;
 import models.Song;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -41,7 +42,10 @@ public class Server extends NanoHTTPD {
 
 		final List<Song> songList =new ArrayList<>();
 		for(final File file: MEDIA_FOLDER.listFiles()) {
-			songList.add(buildFromPath(file.getAbsolutePath()));
+
+			if(getFileExtension(file).equals(".mp3")) {
+				songList.add(buildFromPath(file.getAbsolutePath()));
+			}
 		}
 
 		playlist.setSongs(songList);
@@ -133,6 +137,19 @@ public class Server extends NanoHTTPD {
 					manETSPlayer.setRandom(!manETSPlayer.isRandom());
 				}
 			}
+		} else {
+
+			FileInputStream fis = null;
+
+			final String mimeType = (uri.contains(".m3u8") ? "audio/mpeg-url" : "video/MP2T");
+
+			try {
+				fis = new FileInputStream(MEDIA_FOLDER + uri);
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
+			}
+			return new NanoHTTPD.Response(Response.Status.OK, mimeType, fis, 260);
+
 		}
 
 		return newFixedLengthResponse(body);
@@ -214,16 +231,27 @@ public class Server extends NanoHTTPD {
 
 	private Song buildFromPath(final String path) {
 
-		final MediaMetadataRetriever mediaMetadataRetriever = new MediaMetadataRetriever();
-		mediaMetadataRetriever.setDataSource(path);
+//		final MediaMetadataRetriever mediaMetadataRetriever = new MediaMetadataRetriever();
+//		mediaMetadataRetriever.setDataSource(path);
 
 		final Song song = new Song();
-		song.setTitle(mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE));
-		song.setArtist(mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST));
-		song.setAlbum(mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUM));
-		song.setDuration(Integer.parseInt(mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)));
+//		song.setTitle(mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE));
+//		song.setArtist(mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST));
+//		song.setAlbum(mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUM));
+//		song.setDuration(Integer.parseInt(mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)));
 		song.setLocation(path);
 
 		return song;
+	}
+
+	private String getFileExtension(final File file) {
+		final String name = file.getName();
+		try {
+			return name.substring(name.lastIndexOf("."));
+
+		} catch (Exception e) {
+			return "";
+		}
+
 	}
 }

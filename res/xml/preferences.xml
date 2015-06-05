@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <EditTextPreference
+            android:key="port"
+            android:title="@string/pref_port"
+            android:summary="@string/pref_port_summ"
+            android:defaultValue="8080" />
+    <EditTextPreference
+            android:key="ip"
+            android:title="@string/pref_ip"
+            android:summary="@string/pref_ip_summ"
+            android:defaultValue="127.0.0.1" />
+    <CheckBoxPreference
+            android:key="isStreamMode"
+            android:title="@string/stream"
+            android:summary="@string/stream_summ"
+            android:defaultValue="false" />
+</PreferenceScreen>
