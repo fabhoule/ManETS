@@ -8,9 +8,17 @@ import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.ActionBarActivity;
 import android.view.*;
-import models.ManETS_Player;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
+import ca.etsmtl.models.ManETS_Player;
+import ca.etsmtl.models.Playlist;
+import ca.etsmtl.models.Song;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 import java.io.IOException;
+import java.util.concurrent.ExecutionException;
 
 public class MainActivity extends ActionBarActivity {
 
@@ -18,6 +26,8 @@ public class MainActivity extends ActionBarActivity {
     private String port;
     private String ip;
     private boolean isStreamMode;
+    private final ManETS_Player manETSPlayer = new ManETS_Player();
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -28,7 +38,7 @@ public class MainActivity extends ActionBarActivity {
 
         port = sharedPref.getString("port", "");
         ip = sharedPref.getString("ip", "");
-        ip = sharedPref.getString("isStreamMode", "");
+//        isStreamMode = sharedPref.getBoolean("isStreamMode", false);
         server = new Server();
 
         try {
@@ -37,11 +47,39 @@ public class MainActivity extends ActionBarActivity {
             ioe.printStackTrace();
         }
 
-        if (savedInstanceState == null) {
-            getSupportFragmentManager().beginTransaction()
-                    .add(R.id.container, new PlaceholderFragment())
-                    .commit();
+        final Gson gson = new GsonBuilder().create();
+        final Task task = new Task();
+        final ListView songList = (ListView)findViewById(R.id.songList);
+        Playlist playlist;
+
+        try {
+            playlist = gson.fromJson(task.execute("getPlaylist", "0").get(), Playlist.class);
+        } catch (InterruptedException | ExecutionException e) {
+            e.printStackTrace();
+            return;
         }
+
+        final ArrayAdapter<Song> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, playlist.getSongs());
+        songList.setAdapter(adapter);
+
+
+
+
+        if (savedInstanceState == null) {
+//            getSupportFragmentManager().beginTransaction()
+//                    .add(R.id.container, new PlaceholderFragment())
+//                    .commit();
+        }
+
+
+        songList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position,long arg3) {
+                view.setSelected(true);
+                sendPlay(position);
+            }
+        });
         
     }
 
@@ -86,15 +124,15 @@ public class MainActivity extends ActionBarActivity {
         }
     }
     
-    public void play(View view) {
+    public void pause(View view) {
 
         if(isStreamMode) {
 
             Task playTask = new Task();
-            playTask.execute("play", "0");
+            playTask.execute("pause");
         } else {
 
-            playStream();
+            manETSPlayer.pause();
         }
     }
 
@@ -105,7 +143,6 @@ public class MainActivity extends ActionBarActivity {
 
     public void playStream() {
 
-        final ManETS_Player manETSPlayer = new ManETS_Player();
         try {
             manETSPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
             final String url = String.format("http://%s:%s/01_manifest.m3u8", ip, port);
@@ -118,6 +155,17 @@ public class MainActivity extends ActionBarActivity {
         }
 
         manETSPlayer.start();
+    }
+
+    private void sendPlay(final int index) {
+
+        if(isStreamMode) {
+            Task playTask = new Task();
+            playTask.execute("play", String.valueOf(index));
+        } else {
+
+            playStream();
+        }
     }
 
 }

@@ -19,7 +19,13 @@ public class Task extends AsyncTask<String, Void, String> {
                 } catch (final NumberFormatException e) {
                     e.printStackTrace();
                 }
-            } else if(params[0].equals("getPlaylist")) {
+            }else if(params[0].equals("pause")) {
+				try {
+					return doPause();
+				} catch (final NumberFormatException e) {
+					e.printStackTrace();
+				}
+			} else if(params[0].equals("getPlaylist")) {
 
 				try {
 					return doGetPlaylist(Integer.parseInt(params[1]));
@@ -33,11 +39,15 @@ public class Task extends AsyncTask<String, Void, String> {
 	}
 
 	private String doPlay(final int index) {
-		return doRequest(NanoHTTPD.Method.PUT, String.format("http://127.0.0.1:8080/play?index=%s", index));
+		return doRequest(NanoHTTPD.Method.PUT, String.format("http://127.0.0.1:8080/songs/play?index=%s", index));
 	}
 
 	private String doGetPlaylist(final int index) {
 		return doRequest(NanoHTTPD.Method.GET, String.format("http://127.0.0.1:8080/playlists?index=%s", index));
+	}
+
+	private String doPause() {
+		return doRequest(NanoHTTPD.Method.PUT, "http://127.0.0.1:8080/songs/pause");
 	}
 
 	private String doRequest(final NanoHTTPD.Method method, final String uri) {

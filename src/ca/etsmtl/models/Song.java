@@ -1,4 +1,4 @@
-package models;
+package ca.etsmtl.models;
 
 public class Song {
 
@@ -46,5 +46,10 @@ public class Song {
 
     public void setLocation(String location) {
         this.location = location;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%s - %s", title, artist);
     }
 }

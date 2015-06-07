@@ -1,18 +1,23 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/container"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context="ca.etsmtl.manets.MainActivity"
-    tools:ignore="MergeRootFrame" >
-    
+             xmlns:tools="http://schemas.android.com/tools"
+             android:id="@+id/container"
+             android:layout_width="match_parent"
+             android:layout_height="match_parent"
+             tools:context="ca.etsmtl.manets.MainActivity"
+             tools:ignore="MergeRootFrame">
+
+    <ListView
+            android:layout_width="wrap_content"
+            android:layout_height="300dp"
+            android:id="@+id/songList"
+            android:layout_gravity="center_horizontal|top"/>
     <Button
-        android:id="@+id/button1"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentTop="true"
-        android:onClick="play"
-        android:text="@string/play" />
+            android:id="@+id/button1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentTop="true"
+            android:onClick="pause"
+            android:text="@string/play" android:layout_gravity="center_horizontal|bottom"/>
 
 </FrameLayout>

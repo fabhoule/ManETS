@@ -1,12 +1,13 @@
 package ca.etsmtl.manets;
 
+import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
 import android.os.Environment;
+import ca.etsmtl.models.ManETS_Player;
+import ca.etsmtl.models.Playlist;
+import ca.etsmtl.models.Song;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import models.ManETS_Player;
-import models.Playlist;
-import models.Song;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -232,14 +233,14 @@ public class Server extends NanoHTTPD {
 
 	private Song buildFromPath(final String path) {
 
-//		final MediaMetadataRetriever mediaMetadataRetriever = new MediaMetadataRetriever();
-//		mediaMetadataRetriever.setDataSource(path);
+		final MediaMetadataRetriever mediaMetadataRetriever = new MediaMetadataRetriever();
+		mediaMetadataRetriever.setDataSource(path);
 
 		final Song song = new Song();
-//		song.setTitle(mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE));
-//		song.setArtist(mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST));
-//		song.setAlbum(mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUM));
-//		song.setDuration(Integer.parseInt(mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)));
+		song.setTitle(mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE));
+		song.setArtist(mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST));
+		song.setAlbum(mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUM));
+		song.setDuration(Integer.parseInt(mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)));
 		song.setLocation(path);
 
 		return song;
