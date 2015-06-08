@@ -14,7 +14,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 
 public class Server extends NanoHTTPD {
@@ -24,7 +23,7 @@ public class Server extends NanoHTTPD {
 	private ManETS_Player manETSPlayer;
 	final private Gson gson = new GsonBuilder().create();
 
-	public Server () {
+	public Server() {
 		super(8080);
 		setUp();
 	}
@@ -34,16 +33,16 @@ public class Server extends NanoHTTPD {
 		setUp();
 	}
 
-	private void setUp(){
+	private void setUp() {
 		manETSPlayer = new ManETS_Player();
 		final List<Playlist> playlists = new ArrayList<>();
 		final Playlist playlist = new Playlist();
 		playlist.setName("Default");
 
-		final List<Song> songList =new ArrayList<>();
-		for(final File file: MEDIA_FOLDER.listFiles()) {
+		final List<Song> songList = new ArrayList<>();
+		for (final File file : MEDIA_FOLDER.listFiles()) {
 
-			if(getFileExtension(file).equals(".mp3")) {
+			if (getFileExtension(file).equals(".mp3")) {
 				songList.add(buildFromPath(file.getAbsolutePath()));
 			}
 		}
@@ -55,7 +54,7 @@ public class Server extends NanoHTTPD {
 		manETSPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
 			@Override
 			public void onCompletion(MediaPlayer mediaPlayer) {
-				if(manETSPlayer.isRepeatOne()) {
+				if (manETSPlayer.isRepeatOne()) {
 					play(manETSPlayer.getCurrentSongIdx());
 				} else {
 					next(manETSPlayer.isLooping());
@@ -70,88 +69,42 @@ public class Server extends NanoHTTPD {
 
 		final String uri = session.getUri();
 		final Method method = session.getMethod();
-		final Map<String,String> queryParams = session.getParms();
-
+		final String[] request = uri.split("/");
 		String body = "";
 
 		//Mapping des calls http
-		//call to songs
-		if(uri.contains("/songs")) {
-			//PUT call to songs
-			if (method.equals(Method.PUT)) {
-				if (uri.contains("/play")) {
-					if (queryParams.get("index") != null && !queryParams.get("index").equals("")) {
-						final int index = Integer.parseInt(queryParams.get("index"));
-						final Song song = play(index);
-						body = gson.toJson(song);
-					} else {
-						body = "Missing params";
+		if (request.length >= 2) {
+			switch (request[1]) {
+				case "songs":
+					body = processSongs(request, method);
+					break;
+				case "playlists":
+					if (method.equals(Method.GET)) { //URL format -> /playlists/id
+						final int index = Integer.parseInt(request[2]);
+						body = gson.toJson(manETSPlayer.getPlaylists().get(index));
+						//PUT call to playlists
+					} else if (method.equals(Method.PUT)) {
+						//URL format -> /playlists/action
+						switch (request[2]) {
+							case "looping":
+								manETSPlayer.setLooping(!manETSPlayer.isLooping());
+								break;
+							case "repeat":
+								manETSPlayer.setRepeatOne(!manETSPlayer.isRepeatOne());
+								break;
+							case "random":
+								manETSPlayer.setRandom(!manETSPlayer.isRandom());
+								break;
+							default:
+								body = "Not Supported";
+						}
 					}
-				}else if (uri.contains("/pause")) {
-					if(manETSPlayer.isPlaying()) {
-						pause();
-						body = "OK";
-					} else {
-						manETSPlayer.start();
-						body = "OK";
-					}
-				} else if (uri.contains("/stop")) {
-					stopSong();
-					body = "OK";
-				} else if (uri.contains("/next")) {
-					body = gson.toJson(next(true));
-				} else if (uri.contains("/previous")) {
-					body = gson.toJson(previous());
-				}
-
-			//GET call to songs
-			} else if(method.equals(Method.GET)) {
-				if (queryParams.get("index") != null && !queryParams.get("index").equals("")) {
-					final int index = Integer.parseInt(queryParams.get("index"));
-					final Song song = manETSPlayer.getPlaylists().get(manETSPlayer.getCurrentPlaylistIdx()).getSongs().get(index);
-					body = gson.toJson(song);
-				} else {
-					body = "Missing params";
-				}
-			}
-
-		//call to playlists
-		} else if (uri.contains("/playlists")) {
-			//GET call to playlists
-			if(method.equals(Method.GET)) {
-				if(queryParams.get("index") != null && !queryParams.get("index").equals("")) {
-					final int index = Integer.parseInt(queryParams.get("index"));
-					body = gson.toJson(manETSPlayer.getPlaylists().get(index));
-				} else {
-					body = "Missing params";
-				}
-
-			//PUT call to playlists
-			} else if(method.equals(Method.PUT)) {
-
-				if(uri.contains("/looping")) {
-					manETSPlayer.setLooping(!manETSPlayer.isLooping());
-				} else if(uri.contains("/repeat")) {
-					manETSPlayer.setRepeatOne(!manETSPlayer.isRepeatOne());
-				} else if(uri.contains("/random")) {
-					manETSPlayer.setRandom(!manETSPlayer.isRandom());
-				}
+					break;
+				default:
+					return processFile(uri);
 			}
 		} else {
-
-			FileInputStream fis = null;
-
-			final String mimeType = (uri.contains(".m3u8") ? "audio/mpeg-url" : "video/MP2T");
-			long fileSize = 0;
-
-			try {
-				fis = new FileInputStream(MEDIA_FOLDER + uri);
-				fileSize = fis.getChannel().size();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-			return new NanoHTTPD.Response(Response.Status.OK, mimeType, fis, fileSize);
-
+			return processFile(uri);
 		}
 
 		return newFixedLengthResponse(body);
@@ -162,7 +115,7 @@ public class Server extends NanoHTTPD {
 		final Playlist currentPlaylist = manETSPlayer.getPlaylists().get(manETSPlayer.getCurrentPlaylistIdx());
 		int previousIdx;
 
-		if(manETSPlayer.getCurrentSongIdx() <= 0) {
+		if (manETSPlayer.getCurrentSongIdx() <= 0) {
 			previousIdx = currentPlaylist.getSongs().size() - 1;
 		} else {
 			previousIdx = manETSPlayer.getCurrentSongIdx() - 1;
@@ -176,10 +129,10 @@ public class Server extends NanoHTTPD {
 		final Playlist currentPlaylist = manETSPlayer.getPlaylists().get(manETSPlayer.getCurrentPlaylistIdx());
 		int nextIndex;
 
-		if(manETSPlayer.isRandom()) {
+		if (manETSPlayer.isRandom()) {
 			final Random rn = new Random();
 			nextIndex = rn.nextInt(currentPlaylist.getSongs().size() - 1 + 1);
-		}else {
+		} else {
 			if (manETSPlayer.getCurrentSongIdx() >= currentPlaylist.getSongs().size() - 1) {
 				if (loop) {
 					nextIndex = 0;
@@ -198,7 +151,7 @@ public class Server extends NanoHTTPD {
 
 	private Song play(final int index) {
 
-		if (manETSPlayer.isPlaying()){
+		if (manETSPlayer.isPlaying()) {
 			stopSong();
 		}
 
@@ -220,7 +173,7 @@ public class Server extends NanoHTTPD {
 		return song;
 	}
 
-	private void pause(){
+	private void pause() {
 
 		manETSPlayer.pause();
 	}
@@ -255,5 +208,69 @@ public class Server extends NanoHTTPD {
 			return "";
 		}
 
+	}
+
+	private String processSongs(final String[] request, final Method method) {
+
+		String body = "";
+		if (method.equals(Method.PUT)) {
+			if (request.length >= 3) { //URL format -> /songs/id/action
+				if (request[3].equals("play")) {
+
+					final int index = Integer.parseInt(request[2]);
+					final Song song = play(index);
+					body = gson.toJson(song);
+				}
+			} else { //URL format -> /songs/action
+				switch (request[2]) {
+					case "pause":
+						if (manETSPlayer.isPlaying()) {
+							pause();
+							body = "OK";
+						} else {
+							manETSPlayer.start();
+							body = "OK";
+						}
+						break;
+					case "stop":
+						stopSong();
+						body = "OK";
+						break;
+					case "next":
+						body = gson.toJson(next(true));
+						break;
+					case "previous":
+						body = gson.toJson(previous());
+						break;
+					default:
+						body = "Not Supported";
+				}
+			}
+		} else if (method.equals(Method.GET)) {//URL format -> /songs/id/
+
+			final int index = Integer.parseInt(request[2]);
+			final Song song = manETSPlayer.getPlaylists().get(manETSPlayer.getCurrentPlaylistIdx()).getSongs().get(index);
+			body = gson.toJson(song);
+		} else {
+			body = "Not supported";
+		}
+
+		return body;
+	}
+
+	private NanoHTTPD.Response processFile(final String uri) {
+
+		FileInputStream fis = null;
+
+		final String mimeType = (uri.contains(".m3u8") ? "audio/mpeg-url" : "video/MP2T");
+		long fileSize = 0;
+
+		try {
+			fis = new FileInputStream(MEDIA_FOLDER + uri);
+			fileSize = fis.getChannel().size();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return new NanoHTTPD.Response(Response.Status.OK, mimeType, fis, fileSize);
 	}
 }

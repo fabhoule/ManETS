@@ -159,12 +159,11 @@ public class MainActivity extends ActionBarActivity {
 
     private void sendPlay(final int index) {
 
-        if(isStreamMode) {
+        if (isStreamMode) {
+            playStream();
+        } else {
             Task playTask = new Task();
             playTask.execute("play", String.valueOf(index));
-        } else {
-
-            playStream();
         }
     }
 

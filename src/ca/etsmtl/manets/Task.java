@@ -39,11 +39,11 @@ public class Task extends AsyncTask<String, Void, String> {
 	}
 
 	private String doPlay(final int index) {
-		return doRequest(NanoHTTPD.Method.PUT, String.format("http://127.0.0.1:8080/songs/play?index=%s", index));
+		return doRequest(NanoHTTPD.Method.PUT, String.format("http://127.0.0.1:8080/songs/%s/play", index));
 	}
 
 	private String doGetPlaylist(final int index) {
-		return doRequest(NanoHTTPD.Method.GET, String.format("http://127.0.0.1:8080/playlists?index=%s", index));
+		return doRequest(NanoHTTPD.Method.GET, String.format("http://127.0.0.1:8080/playlists/%s", index));
 	}
 
 	private String doPause() {
