@@ -9,6 +9,14 @@ import java.net.URL;
 
 public class Task extends AsyncTask<String, Void, String> {
 
+	private String ip;
+	private String port;
+
+	public Task(final String ip, final String port) {
+		this.ip = ip;
+		this.port = port;
+	}
+
 	@Override
 	protected String doInBackground(String... params) {
 
@@ -32,6 +40,13 @@ public class Task extends AsyncTask<String, Void, String> {
 				} catch (final NumberFormatException e) {
 					e.printStackTrace();
 				}
+			} else if(params[0].equals("getSongs")) {
+
+				try {
+					return doGetSongs();
+				} catch (final NumberFormatException e) {
+					e.printStackTrace();
+				}
 			}
 		}
 
@@ -39,15 +54,19 @@ public class Task extends AsyncTask<String, Void, String> {
 	}
 
 	private String doPlay(final int index) {
-		return doRequest(NanoHTTPD.Method.PUT, String.format("http://127.0.0.1:8080/songs/%s/play", index));
+		return doRequest(NanoHTTPD.Method.PUT, String.format("http://%s:%s/songs/%s/play",ip,port, index));
 	}
 
 	private String doGetPlaylist(final int index) {
-		return doRequest(NanoHTTPD.Method.GET, String.format("http://127.0.0.1:8080/playlists/%s", index));
+		return doRequest(NanoHTTPD.Method.GET, String.format("http://%s:%s/playlists/%s",ip,port, index));
+	}
+
+	private String doGetSongs() {
+		return doRequest(NanoHTTPD.Method.GET, String.format("http://%s:%s/songs", ip, port));
 	}
 
 	private String doPause() {
-		return doRequest(NanoHTTPD.Method.PUT, "http://127.0.0.1:8080/songs/pause");
+		return doRequest(NanoHTTPD.Method.PUT, String.format("http://%s:%s/songs/pause", ip, port));
 	}
 
 	private String doRequest(final NanoHTTPD.Method method, final String uri) {

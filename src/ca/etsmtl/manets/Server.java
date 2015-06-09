@@ -214,7 +214,7 @@ public class Server extends NanoHTTPD {
 
 		String body = "";
 		if (method.equals(Method.PUT)) {
-			if (request.length >= 3) { //URL format -> /songs/id/action
+			if (request.length >= 4) { //URL format -> /songs/id/action
 				if (request[3].equals("play")) {
 
 					final int index = Integer.parseInt(request[2]);
@@ -246,11 +246,17 @@ public class Server extends NanoHTTPD {
 						body = "Not Supported";
 				}
 			}
-		} else if (method.equals(Method.GET)) {//URL format -> /songs/id/
+		} else if (method.equals(Method.GET)) {
+			if(request.length >= 3 && !request[2].equals("")) {//URL format -> /songs/id/
 
-			final int index = Integer.parseInt(request[2]);
-			final Song song = manETSPlayer.getPlaylists().get(manETSPlayer.getCurrentPlaylistIdx()).getSongs().get(index);
-			body = gson.toJson(song);
+				final int index = Integer.parseInt(request[2]);
+				final Song song = manETSPlayer.getPlaylists().get(manETSPlayer.getCurrentPlaylistIdx()).getSongs().get(index);
+				body = gson.toJson(song);
+			} else {//URL format -> /songs
+
+				final List<Song> songs = manETSPlayer.getPlaylists().get(manETSPlayer.getCurrentPlaylistIdx()).getSongs();
+				body = gson.toJson(songs);
+			}
 		} else {
 			body = "Not supported";
 		}

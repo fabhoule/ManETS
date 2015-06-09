@@ -12,12 +12,13 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import ca.etsmtl.models.ManETS_Player;
-import ca.etsmtl.models.Playlist;
 import ca.etsmtl.models.Song;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 public class MainActivity extends ActionBarActivity {
@@ -34,7 +35,7 @@ public class MainActivity extends ActionBarActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+        final SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
 
         port = sharedPref.getString("port", "");
         ip = sharedPref.getString("ip", "");
@@ -48,18 +49,18 @@ public class MainActivity extends ActionBarActivity {
         }
 
         final Gson gson = new GsonBuilder().create();
-        final Task task = new Task();
+        final Task task = new Task(ip, port);
         final ListView songList = (ListView)findViewById(R.id.songList);
-        Playlist playlist;
+        List<Song> songs;
 
         try {
-            playlist = gson.fromJson(task.execute("getPlaylist", "0").get(), Playlist.class);
+            songs = gson.fromJson(task.execute("getSongs", "0").get(), new TypeToken<List<Song>>(){}.getType());
         } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
             return;
         }
 
-        final ArrayAdapter<Song> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, playlist.getSongs());
+        final ArrayAdapter<Song> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, songs);
         songList.setAdapter(adapter);
 
 
@@ -128,7 +129,7 @@ public class MainActivity extends ActionBarActivity {
 
         if(isStreamMode) {
 
-            Task playTask = new Task();
+            Task playTask = new Task(ip, port);
             playTask.execute("pause");
         } else {
 
@@ -137,7 +138,7 @@ public class MainActivity extends ActionBarActivity {
     }
 
     public void getPlaylist() {
-        Task getTask = new Task();
+        Task getTask = new Task(ip, port);
         getTask.execute("getPlaylist", "0");
     }
 
@@ -162,7 +163,7 @@ public class MainActivity extends ActionBarActivity {
         if (isStreamMode) {
             playStream();
         } else {
-            Task playTask = new Task();
+            Task playTask = new Task(ip,port);
             playTask.execute("play", String.valueOf(index));
         }
     }
