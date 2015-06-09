@@ -1,18 +1,19 @@
-package ca.etsmtl.manets;
+package ca.etsmtl.manets.task;
 
 import android.os.AsyncTask;
+import ca.etsmtl.server.NanoHTTPD;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-public class Task extends AsyncTask<String, Void, String> {
+public class HttpTask extends AsyncTask<String, Void, String> {
 
 	private String ip;
 	private String port;
 
-	public Task(final String ip, final String port) {
+	public HttpTask(final String ip, final String port) {
 		this.ip = ip;
 		this.port = port;
 	}

@@ -1,10 +1,11 @@
-package ca.etsmtl.manets;
+package ca.etsmtl.manets.ui;
 
 
 import android.content.Intent;
 import android.os.Bundle;
 import android.preference.PreferenceActivity;
 import android.view.MenuItem;
+import ca.etsmtl.manets.R;
 
 public class ManETSPreferenceFragment extends PreferenceActivity {
 

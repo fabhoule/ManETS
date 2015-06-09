@@ -1,11 +1,11 @@
-package ca.etsmtl.manets;
+package ca.etsmtl.server;
 
 import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
 import android.os.Environment;
-import ca.etsmtl.models.ManETS_Player;
-import ca.etsmtl.models.Playlist;
-import ca.etsmtl.models.Song;
+import ca.etsmtl.server.models.ManETS_Player;
+import ca.etsmtl.server.models.Playlist;
+import ca.etsmtl.server.models.Song;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -19,6 +19,8 @@ import java.util.Random;
 public class Server extends NanoHTTPD {
 
 	private final File MEDIA_FOLDER = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+	private final String STREAM_EXT = "m3u8";
+	private final String MEDIA_EXT = "mp3";
 
 	private ManETS_Player manETSPlayer;
 	final private Gson gson = new GsonBuilder().create();
@@ -50,6 +52,7 @@ public class Server extends NanoHTTPD {
 		playlist.setSongs(songList);
 		playlists.add(playlist);
 		manETSPlayer.setPlaylists(playlists);
+		manETSPlayer.setCurrentPlaylistIdx(0);
 
 		manETSPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
 			@Override
@@ -195,6 +198,10 @@ public class Server extends NanoHTTPD {
 		song.setAlbum(mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUM));
 		song.setDuration(Integer.parseInt(mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)));
 		song.setLocation(path);
+
+		final String[] splittedPath = path.split("/");
+
+		song.setStreamManifest(splittedPath[splittedPath.length - 1].replace(MEDIA_EXT, STREAM_EXT));
 
 		return song;
 	}

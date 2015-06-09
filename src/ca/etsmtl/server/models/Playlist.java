@@ -1,4 +1,4 @@
-package ca.etsmtl.models;
+package ca.etsmtl.server.models;
 
 import java.util.List;
 

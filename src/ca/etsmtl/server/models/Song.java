@@ -1,4 +1,4 @@
-package ca.etsmtl.models;
+package ca.etsmtl.server.models;
 
 public class Song {
 
@@ -7,6 +7,7 @@ public class Song {
     private String album;
     private Integer duration;
     private String location;
+    private String streamManifest;
 
     public String getTitle() {
         return title;
@@ -46,6 +47,14 @@ public class Song {
 
     public void setLocation(String location) {
         this.location = location;
+    }
+
+    public String getStreamManifest() {
+        return streamManifest;
+    }
+
+    public void setStreamManifest(String streamManifest) {
+        this.streamManifest = streamManifest;
     }
 
     @Override
