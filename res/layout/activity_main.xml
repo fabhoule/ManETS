@@ -73,6 +73,14 @@
                     android:onClick="repeat"
                     android:layout_gravity="center_horizontal|center"
                     android:background="@null"/>
+            <ImageButton
+                    android:id="@+id/btnRefresh"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:src="@drawable/ic_sync_white_48dp"
+                    android:onClick="refreshSong"
+                    android:layout_gravity="center_horizontal|center"
+                    android:background="@null"/>
         </TableRow>
     </TableLayout>
 

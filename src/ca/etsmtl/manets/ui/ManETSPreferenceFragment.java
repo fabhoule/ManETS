@@ -15,11 +15,18 @@ public class ManETSPreferenceFragment extends PreferenceActivity {
         addPreferencesFromResource(R.xml.preferences);
     }
 
+//    @Override
+//    public boolean onCreateOptionsMenu(Menu menu) {
+////        MenuInflater inflater = getMenuInflater();
+////        inflater.inflate(R.menu.mainmenu, menu);
+//        return true;
+//    }
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         Intent intent = new Intent();
         intent.setClass(this, ManETSPreferenceFragment.class);
-        startActivityForResult(intent, 0);
+        startActivity(intent);
         return true;
     }
 }

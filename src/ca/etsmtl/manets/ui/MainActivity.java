@@ -30,24 +30,25 @@ import java.util.List;
 
 public class MainActivity extends ActionBarActivity {
 
+    private final String PORT_KEY = "port";
+    private final String IP_KEY = "ip";
+    private final String IS_STREAM_MODE_KEY = "isStreamMode";
+
     private Server server;
-    private String port;
-    private String ip;
-    private boolean isStreamMode = true;
     private List<Song> songs;
     private final ManETS_Player manETSPlayer = new ManETS_Player();
     private ProgressDialog progDailog;
+    private SharedPreferences sharedPref;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
 
-        final SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+        sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
 
-        port = sharedPref.getString("port", "8080");
-        ip = sharedPref.getString("ip", "127.0.0.1");
-//        isStreamMode = sharedPref.getBoolean("isStreamMode", false);
         server = new Server();
 
         try {
@@ -56,15 +57,13 @@ public class MainActivity extends ActionBarActivity {
             ioe.printStackTrace();
         }
 
-        final HttpTask httpTask = new HttpTask(this, ip, port);
-
-        httpTask.execute("getSongs");
-
         progDailog = new ProgressDialog(this);
         progDailog.setMessage("Loading...");
         progDailog.setIndeterminate(false);
         progDailog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
         progDailog.setCancelable(true);
+
+        refreshSong(null);
 
         manETSPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
             @Override
@@ -124,9 +123,9 @@ public class MainActivity extends ActionBarActivity {
     
     public void pause(View view) {
 
-        if(!isStreamMode) {
+        if(!sharedPref.getBoolean(IS_STREAM_MODE_KEY, false)) {
 
-            HttpTask playHttpTask = new HttpTask(this, ip, port);
+            HttpTask playHttpTask = new HttpTask(this, sharedPref.getString(IP_KEY, ""), sharedPref.getString(PORT_KEY, ""));
             playHttpTask.execute("pause");
         } else {
 
@@ -141,7 +140,7 @@ public class MainActivity extends ActionBarActivity {
     public void previous(View view) {
 
 
-        if (isStreamMode) {
+        if (sharedPref.getBoolean(IS_STREAM_MODE_KEY, false)) {
             if(manETSPlayer.getCurrentPlaylistIdx() == 0){
                 playStream(songs.size() - 1);
             } else {
@@ -149,14 +148,14 @@ public class MainActivity extends ActionBarActivity {
             }
         } else {
 
-            HttpTask getHttpTask = new HttpTask(this, ip, port);
+            HttpTask getHttpTask = new HttpTask(this, sharedPref.getString(IP_KEY, ""), sharedPref.getString(PORT_KEY, ""));
             getHttpTask.execute("previous");
         }
     }
 
     public void next(View view) {
 
-        if (isStreamMode) {
+        if (sharedPref.getBoolean(IS_STREAM_MODE_KEY, false)) {
             if(manETSPlayer.getCurrentPlaylistIdx() >= songs.size()){
                 playStream(0);
             } else {
@@ -164,41 +163,41 @@ public class MainActivity extends ActionBarActivity {
             }
         } else {
 
-            HttpTask getHttpTask = new HttpTask(this, ip, port);
+            HttpTask getHttpTask = new HttpTask(this, sharedPref.getString(IP_KEY, ""), sharedPref.getString(PORT_KEY, ""));
             getHttpTask.execute("next");
         }
     }
 
     public void stop(View view) {
 
-        if (isStreamMode) {
+        if (sharedPref.getBoolean(IS_STREAM_MODE_KEY, false)) {
             manETSPlayer.stop();
             manETSPlayer.reset();
         } else {
 
-            HttpTask getHttpTask = new HttpTask(this, ip, port);
+            HttpTask getHttpTask = new HttpTask(this, sharedPref.getString(IP_KEY, ""), sharedPref.getString(PORT_KEY, ""));
             getHttpTask.execute("stop");
         }
     }
 
     public void shuffle(View view) {
 
-        if(!isStreamMode) {
-            HttpTask getHttpTask = new HttpTask(this, ip, port);
+        if(!sharedPref.getBoolean(IS_STREAM_MODE_KEY, false)) {
+            HttpTask getHttpTask = new HttpTask(this, sharedPref.getString(IP_KEY, ""), sharedPref.getString(PORT_KEY, ""));
             getHttpTask.execute("random");
         }
     }
 
     public void repeat(View view) {
 
-        if(!isStreamMode) {
-            HttpTask getHttpTask = new HttpTask(this, ip, port);
+        if(!sharedPref.getBoolean(IS_STREAM_MODE_KEY, false)) {
+            HttpTask getHttpTask = new HttpTask(this, sharedPref.getString(IP_KEY, ""), sharedPref.getString(PORT_KEY, ""));
             getHttpTask.execute("loop");
         }
     }
 
     public void getPlaylist() {
-        HttpTask getHttpTask = new HttpTask(this, ip, port);
+        HttpTask getHttpTask = new HttpTask(this, sharedPref.getString(IP_KEY, ""), sharedPref.getString(PORT_KEY, ""));
         getHttpTask.execute("getPlaylist", "0");
     }
 
@@ -216,7 +215,8 @@ public class MainActivity extends ActionBarActivity {
 
                 try {
                     manETSPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-                    final String url = String.format("http://%s:%s/%s", ip, port, URLEncoder.encode(songs.get(index).getStreamManifest(), "UTF-8"));
+                    final String url = String.format("http://%s:%s/%s", sharedPref.getString(IP_KEY, ""), sharedPref.getString(PORT_KEY, ""),
+                            URLEncoder.encode(songs.get(index).getStreamManifest(), "UTF-8"));
                     manETSPlayer.setDataSource(url);
 
                     manETSPlayer.prepare(); // Opération qui prend beaucoup de temps.
@@ -264,12 +264,18 @@ public class MainActivity extends ActionBarActivity {
 
     private void sendPlay(final int index) {
 
-        if (isStreamMode) {
+        if (sharedPref.getBoolean(IS_STREAM_MODE_KEY, false)) {
             playStream(index);
         } else {
-            HttpTask playHttpTask = new HttpTask(this, ip,port);
+            HttpTask playHttpTask = new HttpTask(this, sharedPref.getString(IP_KEY, ""), sharedPref.getString(PORT_KEY, ""));
             playHttpTask.execute("play", String.valueOf(index));
         }
+    }
+
+    public void refreshSong(View view){
+        final HttpTask httpTask = new HttpTask(this, sharedPref.getString(IP_KEY, ""), sharedPref.getString(PORT_KEY, ""));
+
+        httpTask.execute("getSongs");
     }
 
 }
