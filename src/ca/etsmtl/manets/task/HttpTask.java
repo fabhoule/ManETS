@@ -3,6 +3,7 @@ package ca.etsmtl.manets.task;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.os.AsyncTask;
+import ca.etsmtl.manets.ui.MainActivity;
 import ca.etsmtl.server.NanoHTTPD;
 
 import java.io.BufferedReader;
@@ -16,6 +17,7 @@ public class HttpTask extends AsyncTask<String, Void, String> {
 	private String port;
 	private Activity activity;
 	private ProgressDialog progDailog;
+	private boolean isGetSong;
 
 	public HttpTask(final Activity activity, final String ip, final String port) {
 		this.ip = ip;
@@ -90,6 +92,7 @@ public class HttpTask extends AsyncTask<String, Void, String> {
 			} else if(params[0].equals("getSongs")) {
 
 				try {
+					isGetSong = true;
 					return doGetSongs();
 				} catch (final NumberFormatException e) {
 					e.printStackTrace();
@@ -101,9 +104,13 @@ public class HttpTask extends AsyncTask<String, Void, String> {
 	}
 
 	@Override
-	protected void onPostExecute(String unused) {
-		super.onPostExecute(unused);
+	protected void onPostExecute(final String result) {
+		super.onPostExecute(result);
+		if(isGetSong) {
+			((MainActivity) activity).displaySongs(result);
+		}
 		progDailog.dismiss();
+		isGetSong = false;
 	}
 
 	private String doLoop() {

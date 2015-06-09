@@ -21,12 +21,12 @@ import ca.etsmtl.server.models.ManETS_Player;
 import ca.etsmtl.server.models.Song;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 
 public class MainActivity extends ActionBarActivity {
 
@@ -45,11 +45,8 @@ public class MainActivity extends ActionBarActivity {
 
         final SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
 
-//        port = sharedPref.getString("port", "");
-//        ip = sharedPref.getString("ip", "");
-        //TODO Dynamiser
-        port = "8080";
-        ip = "127.0.0.1";
+        port = sharedPref.getString("port", "8080");
+        ip = sharedPref.getString("ip", "127.0.0.1");
 //        isStreamMode = sharedPref.getBoolean("isStreamMode", false);
         server = new Server();
 
@@ -59,20 +56,9 @@ public class MainActivity extends ActionBarActivity {
             ioe.printStackTrace();
         }
 
-        final Gson gson = new GsonBuilder().create();
         final HttpTask httpTask = new HttpTask(this, ip, port);
-        final ListView songList = (ListView)findViewById(R.id.songList);
 
-        try {
-            songs = gson.fromJson(httpTask.execute("getSongs").get(), new TypeToken<List<Song>>(){}.getType());
-        } catch (InterruptedException | ExecutionException e) {
-            e.printStackTrace();
-            return;
-        }
-
-        final ArrayAdapter<Song> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, songs);
-        songList.setAdapter(adapter);
-
+        httpTask.execute("getSongs");
 
         progDailog = new ProgressDialog(this);
         progDailog.setMessage("Loading...");
@@ -90,15 +76,7 @@ public class MainActivity extends ActionBarActivity {
             }
         });
 
-        songList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position,long arg3) {
-                view.setSelected(true);
-                sendPlay(position);
-            }
-        });
-        
     }
 
 
@@ -226,9 +204,6 @@ public class MainActivity extends ActionBarActivity {
 
     public void playStream(final int index) {
 
-
-
-
         new AsyncTask<String, Void, String>() {
             protected void onPreExecute() {
                 progDailog.show();
@@ -260,6 +235,31 @@ public class MainActivity extends ActionBarActivity {
         }.execute();
 
 
+    }
+
+    public void displaySongs(final String result) {
+
+        final ListView songList = (ListView)findViewById(R.id.songList);
+        final Gson gson = new GsonBuilder().create();
+
+        try {
+            songs = gson.fromJson(result, new TypeToken<List<Song>>(){}.getType());
+        } catch (JsonSyntaxException e) {
+            e.printStackTrace();
+        }
+
+        final ArrayAdapter<Song> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, songs);
+        songList.setAdapter(adapter);
+
+
+        songList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position,long arg3) {
+                view.setSelected(true);
+                sendPlay(position);
+            }
+        });
     }
 
     private void sendPlay(final int index) {
