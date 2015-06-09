@@ -1,8 +1,11 @@
 package ca.etsmtl.manets.ui;
 
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.media.AudioManager;
+import android.media.MediaPlayer;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
@@ -13,7 +16,6 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import ca.etsmtl.manets.R;
 import ca.etsmtl.manets.task.HttpTask;
-import ca.etsmtl.manets.task.StreamingTask;
 import ca.etsmtl.server.Server;
 import ca.etsmtl.server.models.ManETS_Player;
 import ca.etsmtl.server.models.Song;
@@ -34,6 +36,7 @@ public class MainActivity extends ActionBarActivity {
     private boolean isStreamMode = true;
     private List<Song> songs;
     private final ManETS_Player manETSPlayer = new ManETS_Player();
+    private ProgressDialog progDailog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,10 +60,8 @@ public class MainActivity extends ActionBarActivity {
         }
 
         final Gson gson = new GsonBuilder().create();
-        final HttpTask httpTask = new HttpTask(ip, port);
+        final HttpTask httpTask = new HttpTask(this, ip, port);
         final ListView songList = (ListView)findViewById(R.id.songList);
-        StreamingTask.getInstance().setIp(ip);
-        StreamingTask.getInstance().setPort(port);
 
         try {
             songs = gson.fromJson(httpTask.execute("getSongs").get(), new TypeToken<List<Song>>(){}.getType());
@@ -73,14 +74,21 @@ public class MainActivity extends ActionBarActivity {
         songList.setAdapter(adapter);
 
 
+        progDailog = new ProgressDialog(this);
+        progDailog.setMessage("Loading...");
+        progDailog.setIndeterminate(false);
+        progDailog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+        progDailog.setCancelable(true);
 
-
-        if (savedInstanceState == null) {
-//            getSupportFragmentManager().beginTransaction()
-//                    .add(R.id.container, new PlaceholderFragment())
-//                    .commit();
-        }
-
+        manETSPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+            @Override
+            public void onPrepared(MediaPlayer mp) {
+                if (progDailog != null && progDailog.isShowing()){
+                    progDailog.dismiss();
+                }
+                mp.start();
+            }
+        });
 
         songList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
@@ -118,6 +126,8 @@ public class MainActivity extends ActionBarActivity {
         startActivity(new Intent(this, ManETSPreferenceFragment.class));
     }
 
+
+
     /**
      * A placeholder fragment containing a simple view.
      */
@@ -136,9 +146,9 @@ public class MainActivity extends ActionBarActivity {
     
     public void pause(View view) {
 
-        if(isStreamMode) {
+        if(!isStreamMode) {
 
-            HttpTask playHttpTask = new HttpTask(ip, port);
+            HttpTask playHttpTask = new HttpTask(this, ip, port);
             playHttpTask.execute("pause");
         } else {
 
@@ -150,25 +160,106 @@ public class MainActivity extends ActionBarActivity {
         }
     }
 
+    public void previous(View view) {
+
+
+        if (isStreamMode) {
+            if(manETSPlayer.getCurrentPlaylistIdx() == 0){
+                playStream(songs.size() - 1);
+            } else {
+                playStream(manETSPlayer.getCurrentPlaylistIdx() - 1);
+            }
+        } else {
+
+            HttpTask getHttpTask = new HttpTask(this, ip, port);
+            getHttpTask.execute("previous");
+        }
+    }
+
+    public void next(View view) {
+
+        if (isStreamMode) {
+            if(manETSPlayer.getCurrentPlaylistIdx() >= songs.size()){
+                playStream(0);
+            } else {
+                playStream(manETSPlayer.getCurrentPlaylistIdx() + 1);
+            }
+        } else {
+
+            HttpTask getHttpTask = new HttpTask(this, ip, port);
+            getHttpTask.execute("next");
+        }
+    }
+
+    public void stop(View view) {
+
+        if (isStreamMode) {
+            manETSPlayer.stop();
+            manETSPlayer.reset();
+        } else {
+
+            HttpTask getHttpTask = new HttpTask(this, ip, port);
+            getHttpTask.execute("stop");
+        }
+    }
+
+    public void shuffle(View view) {
+
+        if(!isStreamMode) {
+            HttpTask getHttpTask = new HttpTask(this, ip, port);
+            getHttpTask.execute("random");
+        }
+    }
+
+    public void repeat(View view) {
+
+        if(!isStreamMode) {
+            HttpTask getHttpTask = new HttpTask(this, ip, port);
+            getHttpTask.execute("loop");
+        }
+    }
+
     public void getPlaylist() {
-        HttpTask getHttpTask = new HttpTask(ip, port);
+        HttpTask getHttpTask = new HttpTask(this, ip, port);
         getHttpTask.execute("getPlaylist", "0");
     }
 
     public void playStream(final int index) {
 
-        try {
-            manETSPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-            final String url = String.format("http://%s:%s/%s", ip, port, URLEncoder.encode(songs.get(index).getStreamManifest(), "UTF-8"));
-            manETSPlayer.setDataSource(url);
 
-            manETSPlayer.prepare(); // Opération qui prend beaucoup de temps.
 
-        } catch (IllegalArgumentException | SecurityException | IOException | IllegalStateException e) {
-            e.printStackTrace();
-        }
 
-        manETSPlayer.start();
+        new AsyncTask<String, Void, String>() {
+            protected void onPreExecute() {
+                progDailog.show();
+            }
+
+            protected String doInBackground(String... params) {
+                if (manETSPlayer.isPlaying()) {
+                    stop(null);
+                }
+
+                try {
+                    manETSPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+                    final String url = String.format("http://%s:%s/%s", ip, port, URLEncoder.encode(songs.get(index).getStreamManifest(), "UTF-8"));
+                    manETSPlayer.setDataSource(url);
+
+                    manETSPlayer.prepare(); // Opération qui prend beaucoup de temps.
+
+                } catch (IllegalArgumentException | SecurityException | IOException | IllegalStateException e) {
+                    e.printStackTrace();
+                }
+
+                manETSPlayer.setCurrentPlaylistIdx(index);
+                return "OK";
+            }
+
+            protected void onPostExecute(String result) {
+                progDailog.dismiss();
+            }
+        }.execute();
+
+
     }
 
     private void sendPlay(final int index) {
@@ -176,7 +267,7 @@ public class MainActivity extends ActionBarActivity {
         if (isStreamMode) {
             playStream(index);
         } else {
-            HttpTask playHttpTask = new HttpTask(ip,port);
+            HttpTask playHttpTask = new HttpTask(this, ip,port);
             playHttpTask.execute("play", String.valueOf(index));
         }
     }

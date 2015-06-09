@@ -11,13 +11,71 @@
             android:layout_height="300dp"
             android:id="@+id/songList"
             android:layout_gravity="center_horizontal|top"/>
-    <Button
-            android:id="@+id/button1"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentLeft="true"
-            android:layout_alignParentTop="true"
-            android:onClick="pause"
-            android:text="@string/play" android:layout_gravity="center_horizontal|bottom"/>
+
+    <TableLayout android:layout_width="match_parent"
+                 android:layout_height="150dp"
+                 android:layout_gravity="bottom">
+
+        <TableRow android:id="@+id/row1"
+                  android:gravity="center"
+                  android:layout_width="wrap_content">
+
+            <ImageButton
+                    android:id="@+id/btnPrevious"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:src="@drawable/ic_skip_previous_white_48dp"
+                    android:onClick="previous"
+                    android:layout_gravity="center_horizontal|center"
+                    android:background="@null"/>
+            <ImageButton
+                    android:id="@+id/btnPause"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:src="@drawable/ic_pause_white_48dp"
+                    android:onClick="pause"
+                    android:layout_gravity="center_horizontal|center"
+                    android:background="@null"/>
+            <ImageButton
+                    android:id="@+id/btnStop"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:src="@drawable/ic_stop_white_48dp"
+                    android:onClick="stop"
+                    android:layout_gravity="center_horizontal|center"
+                    android:background="@null"/>
+
+            <ImageButton
+                    android:id="@+id/btnNext"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:src="@drawable/ic_skip_next_white_48dp"
+                    android:onClick="next"
+                    android:layout_gravity="center_horizontal|center"
+                    android:background="@null"/>
+        </TableRow>
+        <TableRow android:id="@+id/row2"
+                  android:gravity="center"
+                  android:layout_width="wrap_content">
+            <ImageButton
+                    android:id="@+id/btnShuffle"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:src="@drawable/ic_shuffle_white_48dp"
+                    android:onClick="shuffle"
+                    android:layout_gravity="center_horizontal|center"
+                    android:background="@null"/>
+            <ImageButton
+                    android:id="@+id/btnRepeat"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:src="@drawable/ic_repeat_white_48dp"
+                    android:onClick="repeat"
+                    android:layout_gravity="center_horizontal|center"
+                    android:background="@null"/>
+        </TableRow>
+    </TableLayout>
+
+
 
 </FrameLayout>

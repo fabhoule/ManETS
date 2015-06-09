@@ -1,5 +1,7 @@
 package ca.etsmtl.manets.task;
 
+import android.app.Activity;
+import android.app.ProgressDialog;
 import android.os.AsyncTask;
 import ca.etsmtl.server.NanoHTTPD;
 
@@ -12,10 +14,24 @@ public class HttpTask extends AsyncTask<String, Void, String> {
 
 	private String ip;
 	private String port;
+	private Activity activity;
+	private ProgressDialog progDailog;
 
-	public HttpTask(final String ip, final String port) {
+	public HttpTask(final Activity activity, final String ip, final String port) {
 		this.ip = ip;
 		this.port = port;
+		this.activity = activity;
+		this.progDailog = new ProgressDialog(activity);
+	}
+
+	@Override
+	protected void onPreExecute() {
+		super.onPreExecute();
+		progDailog.setMessage("Loading...");
+		progDailog.setIndeterminate(false);
+		progDailog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+		progDailog.setCancelable(true);
+		progDailog.show();
 	}
 
 	@Override
@@ -28,9 +44,39 @@ public class HttpTask extends AsyncTask<String, Void, String> {
                 } catch (final NumberFormatException e) {
                     e.printStackTrace();
                 }
-            }else if(params[0].equals("pause")) {
+            } else if(params[0].equals("pause")) {
 				try {
 					return doPause();
+				} catch (final NumberFormatException e) {
+					e.printStackTrace();
+				}
+			} else if(params[0].equals("stop")) {
+				try {
+					return doStop();
+				} catch (final NumberFormatException e) {
+					e.printStackTrace();
+				}
+			} else if(params[0].equals("next")) {
+				try {
+					return doNext();
+				} catch (final NumberFormatException e) {
+					e.printStackTrace();
+				}
+			} else if(params[0].equals("previous")) {
+				try {
+					return doPrevious();
+				} catch (final NumberFormatException e) {
+					e.printStackTrace();
+				}
+			} else if(params[0].equals("random")) {
+				try {
+					return doRandom();
+				} catch (final NumberFormatException e) {
+					e.printStackTrace();
+				}
+			} else if(params[0].equals("loop")) {
+				try {
+					return doLoop();
 				} catch (final NumberFormatException e) {
 					e.printStackTrace();
 				}
@@ -52,6 +98,32 @@ public class HttpTask extends AsyncTask<String, Void, String> {
 		}
 
 		return null;
+	}
+
+	@Override
+	protected void onPostExecute(String unused) {
+		super.onPostExecute(unused);
+		progDailog.dismiss();
+	}
+
+	private String doLoop() {
+		return doRequest(NanoHTTPD.Method.PUT, String.format("http://%s:%s/playlists/looping", ip, port));
+	}
+
+	private String doRandom() {
+		return doRequest(NanoHTTPD.Method.PUT, String.format("http://%s:%s/playlists/random", ip, port));
+	}
+
+	private String doPrevious() {
+		return doRequest(NanoHTTPD.Method.PUT, String.format("http://%s:%s/songs/previous", ip, port));
+	}
+
+	private String doNext() {
+		return doRequest(NanoHTTPD.Method.PUT, String.format("http://%s:%s/songs/next", ip, port));
+	}
+
+	private String doStop() {
+		return doRequest(NanoHTTPD.Method.PUT, String.format("http://%s:%s/songs/stop", ip, port));
 	}
 
 	private String doPlay(final int index) {
